@@ -21,7 +21,8 @@ import ba.etfrma.rma26p19950.R
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-private val REFERENTNO_VRIJEME = LocalDateTime.now()
+//private val REFERENTNO_VRIJEME = LocalDateTime.now()
+private val REFERENTNO_VRIJEME = LocalDateTime.of(2021, 6, 9, 12, 0, 0)
 private val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
 private fun getStatusDrawable(kviz: Kviz): Int {
