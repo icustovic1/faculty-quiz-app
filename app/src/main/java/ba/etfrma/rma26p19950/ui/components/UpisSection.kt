@@ -6,6 +6,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import ba.etf.rma26.projekat.data.models.Predmet
+import ba.etf.rma26.projekat.data.models.Grupa
 import ba.etfrma.rma26p19950.viewmodel.KvizViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -96,7 +98,6 @@ fun UpisSection(viewModel: KvizViewModel) {
             }
         }
 
-
         ExposedDropdownMenuBox(
             expanded = expandedGrupa,
             onExpandedChange = { if (selectedPredmet != null) expandedGrupa = it },
@@ -126,7 +127,6 @@ fun UpisSection(viewModel: KvizViewModel) {
                 }
             }
         }
-
 
         Button(
             onClick = { viewModel.upisi() },

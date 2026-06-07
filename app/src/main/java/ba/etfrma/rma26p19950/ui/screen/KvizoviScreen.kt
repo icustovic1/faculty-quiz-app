@@ -1,5 +1,6 @@
 package ba.etfrma.rma26p19950.ui.screen
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,7 +19,8 @@ import ba.etfrma.rma26p19950.viewmodel.KvizViewModel
 fun KvizoviScreen(
     viewModel: KvizViewModel,
     filterLabel: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onKvizClick: (Int) -> Unit
 ) {
     val kvizovi by viewModel.filteredKvizovi.collectAsState()
 
@@ -45,7 +47,10 @@ fun KvizoviScreen(
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             items(kvizovi) { kviz ->
-                KvizItem(kviz = kviz)
+                KvizItem(
+                    kviz = kviz,
+                    onClick = { onKvizClick(kviz.id) }
+                )
             }
         }
     }

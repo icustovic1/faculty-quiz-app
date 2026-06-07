@@ -9,6 +9,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import ba.etfrma.rma26p19950.ui.screen.FilterScreen
 import ba.etfrma.rma26p19950.ui.screen.KvizoviScreen
+import ba.etfrma.rma26p19950.ui.screen.KvizDetaljiScreen
 import ba.etfrma.rma26p19950.viewmodel.KvizViewModel
 
 @Composable
@@ -38,6 +39,21 @@ fun NavGraph() {
             KvizoviScreen(
                 viewModel = viewModel,
                 filterLabel = filterLabel,
+                onBack = { navController.popBackStack() },
+                onKvizClick = { idKviza ->
+                    navController.navigate("kvizDetalji/$idKviza")
+                }
+            )
+        }
+        composable(
+            route = "kvizDetalji/{idKviza}",
+            arguments = listOf(
+                navArgument("idKviza") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val idKviza = backStackEntry.arguments?.getInt("idKviza") ?: 0
+            KvizDetaljiScreen(
+                idKviza = idKviza,
                 onBack = { navController.popBackStack() }
             )
         }
