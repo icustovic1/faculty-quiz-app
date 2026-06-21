@@ -11,7 +11,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 object ApiConfig {
-    private var baseUrl = "http://192.168.0.4:3000/"
+    private var baseUrl = "http://192.168.0.9:3000/"
     private var apiKey: String? = null
     private var _retrofit: Retrofit? = null
 

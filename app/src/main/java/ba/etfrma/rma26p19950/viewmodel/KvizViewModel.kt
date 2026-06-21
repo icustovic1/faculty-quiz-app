@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
+
 enum class FilterOpcija(val label: String) {
     SVI_MOJI("Svi moji kvizovi"),
     SVI("Svi kvizovi"),
@@ -31,6 +32,13 @@ class KvizViewModel : ViewModel() {
 
     private val _brojKvizova = MutableStateFlow(0)
     val brojKvizova: StateFlow<Int> = _brojKvizova.asStateFlow()
+
+    // NOVO: loading i error stanja za bolji UX
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _greska = MutableStateFlow<String?>(null)
+    val greska: StateFlow<String?> = _greska.asStateFlow()
 
     private val _selectedGodina = MutableStateFlow<Int?>(null)
     val selectedGodina: StateFlow<Int?> = _selectedGodina.asStateFlow()
@@ -61,21 +69,33 @@ class KvizViewModel : ViewModel() {
     fun applyFilter(filter: FilterOpcija) {
         _selectedFilter.value = filter
         viewModelScope.launch {
-            val ref = LocalDateTime.now()
-            val lista = when (filter) {
-                FilterOpcija.SVI_MOJI -> KvizRepository.getUpisani()
-                FilterOpcija.SVI -> KvizRepository.getAll()
-                FilterOpcija.URADENI -> KvizRepository.getUpisani().filter { it.datumRada != null }
-                FilterOpcija.BUDUCI -> KvizRepository.getUpisani().filter {
-                    it.datumPocetka.isAfter(ref)
+            _isLoading.value = true
+            _greska.value = null
+            try {
+                val ref = LocalDateTime.now()
+                val osnova = when (filter) {
+                    FilterOpcija.SVI -> KvizRepository.getAll()
+                    else -> KvizRepository.getUpisani()
                 }
-                FilterOpcija.PROSLI_NEURADENI -> KvizRepository.getUpisani().filter {
-                    it.datumKraj.isBefore(ref) && it.datumRada == null
-                }
-            }.sortedBy { it.datumPocetka }
+                val lista = when (filter) {
+                    FilterOpcija.SVI_MOJI -> osnova
+                    FilterOpcija.SVI -> osnova
+                    FilterOpcija.URADENI -> osnova.filter { it.datumRada != null }
+                    FilterOpcija.BUDUCI -> osnova.filter { it.datumPocetka.isAfter(ref) }
+                    FilterOpcija.PROSLI_NEURADENI -> osnova.filter {
+                        it.datumKraj.isBefore(ref) && it.datumRada == null
+                    }
+                }.sortedBy { it.datumPocetka }
 
-            _filteredKvizovi.value = lista
-            _brojKvizova.value = lista.size
+                _filteredKvizovi.value = lista
+                _brojKvizova.value = lista.size
+            } catch (e: Exception) {
+                _greska.value = "Nije moguće učitati kvizove. Provjerite konekciju."
+                _filteredKvizovi.value = emptyList()
+                _brojKvizova.value = 0
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 

@@ -12,6 +12,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import ba.etfrma.rma26p19950.util.KvizStatus
+import ba.etfrma.rma26p19950.util.odrediStatus
 import ba.etfrma.rma26p19950.viewmodel.KvizDetaljiViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,6 +34,10 @@ fun KvizDetaljiScreen(
     LaunchedEffect(idKviza) {
         viewModel.ucitaj(idKviza)
     }
+
+    // Status kviza - kviz se moze raditi samo ako je aktivan
+    val status = kviz?.let { odrediStatus(it) }
+    val mozeRaditi = status == KvizStatus.AKTIVAN
 
     Scaffold(
         topBar = {
@@ -56,18 +62,44 @@ fun KvizDetaljiScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                if (pokusaj == null) {
-                    Button(
-                        onClick = { viewModel.zapocniKviz(idKviza) },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Započni kviz")
+                when {
+                    kviz == null -> {
+                        // jos se ucitava
                     }
-                } else {
-                    Text(
-                        text = "Kviz u toku — ID pokušaja: ${pokusaj!!.id}",
-                        fontSize = 14.sp
-                    )
+                    !mozeRaditi && pokusaj == null -> {
+                        // Kviz nije aktivan - ne moze se zapoceti
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Text(
+                                text = when (status) {
+                                    KvizStatus.BUDUCI -> "Ovaj kviz još nije počeo. Možete ga raditi kada postane aktivan."
+                                    KvizStatus.PROSLI -> "Ovaj kviz je istekao i više se ne može raditi."
+                                    KvizStatus.URADEN -> "Ovaj kviz ste već uradili."
+                                    else -> "Ovaj kviz trenutno nije dostupan."
+                                },
+                                modifier = Modifier.padding(16.dp),
+                                fontSize = 15.sp
+                            )
+                        }
+                    }
+                    pokusaj == null -> {
+                        Button(
+                            onClick = { viewModel.zapocniKviz(idKviza) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Započni kviz")
+                        }
+                    }
+                    else -> {
+                        Text(
+                            text = "Kviz u toku — odgovorite na pitanja ispod",
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             }
 
@@ -97,35 +129,49 @@ fun KvizDetaljiScreen(
                 }
             }
 
-            items(pitanja) { pitanje ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+            // Pitanja se prikazuju samo ako je kviz zapocet (aktivan)
+            if (pokusaj != null) {
+                items(pitanja) { pitanje ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
-                        Text(
-                            text = pitanje.tekstPitanja,
-                            fontSize = 16.sp
-                        )
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = pitanje.tekstPitanja,
+                                fontSize = 16.sp
+                            )
 
-                        pitanje.opcije.forEachIndexed { index, opcija ->
-                            val odabran = odabraniOdgovori[pitanje.id] == index
-                            OutlinedButton(
-                                onClick = {
-                                    val p = pokusaj
-                                    if (p != null) {
-                                        viewModel.posaljiOdgovor(p.id, pitanje.id, index)
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = if (odabran) ButtonDefaults.outlinedButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                                ) else ButtonDefaults.outlinedButtonColors()
-                            ) {
-                                Text(opcija)
+                            val odgovoreno = odabraniOdgovori.containsKey(pitanje.id)
+
+                            pitanje.opcije.forEachIndexed { index, opcija ->
+                                val odabran = odabraniOdgovori[pitanje.id] == index
+                                OutlinedButton(
+                                    onClick = {
+                                        val p = pokusaj
+                                        if (p != null && !odgovoreno) {
+                                            viewModel.posaljiOdgovor(p.id, pitanje.id, index)
+                                        }
+                                    },
+                                    enabled = !odgovoreno,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = if (odabran) ButtonDefaults.outlinedButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                                    ) else ButtonDefaults.outlinedButtonColors()
+                                ) {
+                                    Text(opcija)
+                                }
+                            }
+
+                            if (odgovoreno) {
+                                Text(
+                                    text = "Odgovor zabilježen",
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
                             }
                         }
                     }

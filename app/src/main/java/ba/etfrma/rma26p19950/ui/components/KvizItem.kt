@@ -17,44 +17,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ba.etf.rma26.projekat.data.models.Kviz
-import ba.etfrma.rma26p19950.R
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-
-//private val REFERENTNO_VRIJEME = LocalDateTime.now()
-private val REFERENTNO_VRIJEME = LocalDateTime.of(2021, 6, 9, 12, 0, 0)
-private val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
-
-private fun getStatusDrawable(kviz: Kviz): Int {
-    if (kviz.datumRada != null) return R.drawable.plava
-    val ref = REFERENTNO_VRIJEME
-    return when {
-        kviz.datumPocetka.isAfter(ref) -> R.drawable.zuta
-        kviz.datumKraj.isBefore(ref) -> R.drawable.crvena
-        else -> R.drawable.zelena
-    }
-}
-
-private fun getStatusOpis(kviz: Kviz): String {
-    if (kviz.datumRada != null) return "Plava"
-    val ref = REFERENTNO_VRIJEME
-    return when {
-        kviz.datumPocetka.isAfter(ref) -> "Žuta"
-        kviz.datumKraj.isBefore(ref) -> "Crvena"
-        else -> "Zelena"
-    }
-}
-
-private fun getDisplayDatum(kviz: Kviz): LocalDateTime {
-    return when {
-        kviz.datumRada != null -> kviz.datumRada
-        kviz.datumPocetka.isAfter(REFERENTNO_VRIJEME) -> kviz.datumPocetka
-        else -> kviz.datumKraj
-    }
-}
+import ba.etfrma.rma26p19950.config.Config
+import ba.etfrma.rma26p19950.util.odrediStatus
+import ba.etfrma.rma26p19950.util.prikazniDatum
 
 @Composable
 fun KvizItem(kviz: Kviz, onClick: () -> Unit = {}) {
+    val status = odrediStatus(kviz)
+    val datum = prikazniDatum(kviz)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -78,22 +49,27 @@ fun KvizItem(kviz: Kviz, onClick: () -> Unit = {}) {
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
-                Image(
-                    painter = painterResource(id = getStatusDrawable(kviz)),
-                    contentDescription = getStatusOpis(kviz),
-                    modifier = Modifier
-                        .size(16.dp)
-                        .testTag("kviz_status_icon")
-                        .semantics {
-                            contentDescription = getStatusOpis(kviz)
-                        }
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = status.opis,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(end = 6.dp)
+                    )
+                    Image(
+                        painter = painterResource(id = status.drawable),
+                        contentDescription = status.opis,
+                        modifier = Modifier
+                            .size(16.dp)
+                            .testTag("kviz_status_icon")
+                            .semantics { contentDescription = status.opis }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(text = kviz.naziv, fontSize = 14.sp)
-            Text(text = getDisplayDatum(kviz).format(dateFormatter), fontSize = 13.sp)
+            Text(text = datum.format(Config.DATUM_FORMAT), fontSize = 13.sp)
 
             Spacer(modifier = Modifier.height(4.dp))
 
